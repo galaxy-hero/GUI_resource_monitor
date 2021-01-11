@@ -34,4 +34,5 @@ class DiskMonitor(Model):
 
 if __name__ == '__main__':
     db.connect()
-    db.create_tables([CPUMonitor, MemoryMonitor, DiskMonitor])
+    db.drop_tables([CPUMonitor, MemoryMonitor, DiskMonitor, Partition])
+    db.create_tables([CPUMonitor, MemoryMonitor, DiskMonitor, Partition])
