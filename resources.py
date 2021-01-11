@@ -20,7 +20,8 @@ def get_system_partitions():
     return result
 
 def get_network_bytes():
-    return psutil.net_io_counters()
+    psutil.net_io_counters.cache_clear()
+    return psutil.net_io_counters(nowrap=False)
 
 if __name__ == '__main__':
     #print("CPU usage is: ")

@@ -30,6 +30,10 @@ def generate_plot():
         query_model = MemoryMonitor
     elif option_val.get() == "disk":
         query_model = DiskMonitor
+    elif option_val.get() == "net_recv":
+        query_model = NetworkReceiveMonitor
+    elif option_val.get() == "net_sent":
+        query_model = NetworkSentMonitor
     if not query_model:
         return
     query = list(query_model.select().where(query_model.time.between(start, end)))
@@ -42,7 +46,7 @@ def generate_plot():
     plt.show()
 
 
-def animate_cpu(i, line, x_array, y_array):
+def animate_cpu(i, line, x_array, y_array, ax1):
     cpu_entry = CPUMonitor.select().order_by(CPUMonitor.time.desc()).first()
     if cpu_entry is None:
         return
@@ -50,7 +54,7 @@ def animate_cpu(i, line, x_array, y_array):
     y_array.append(cpu_entry.value)
     line.set_data(x_array, y_array)
 
-def animate_ram(i, line, x_array, y_array):
+def animate_ram(i, line, x_array, y_array, ax1):
     ram_entry = MemoryMonitor.select().order_by(MemoryMonitor.time.desc()).first()
     if ram_entry is None:
         return
@@ -58,7 +62,7 @@ def animate_ram(i, line, x_array, y_array):
     y_array.append(ram_entry.value)
     line.set_data(x_array, y_array)
 
-def animate_partition(i, line, x_array, y_array, partition):
+def animate_partition(i, line, x_array, y_array, ax1, partition):
     disk_entry = DiskMonitor.select().where(DiskMonitor.partition == partition).order_by(DiskMonitor.time.desc()).first()
     if not disk_entry:
         return
@@ -66,23 +70,25 @@ def animate_partition(i, line, x_array, y_array, partition):
     y_array.append(disk_entry.value)
     line.set_data(x_array, y_array)
 
-def animate_network_sent(i, line, x_array, y_array):
+def animate_network_sent(i, line, x_array, y_array, ax1):
     nw_sent_entry = NetworkSentMonitor.select().order_by(NetworkSentMonitor.time.desc()).first()
     if nw_sent_entry is None:
         return
     y_array.pop(0)
-    y_array.append(nw_sent_entry.value)
+    y_array.append(nw_sent_entry.value / (1024 ** 2))
+    ax1.set_ylim(0, 100)
     line.set_data(x_array, y_array)
 
-def animate_network_recv(i, line, x_array, y_array):
+def animate_network_recv(i, line, x_array, y_array, ax1):
     nw_recv_entry = NetworkReceiveMonitor.select().order_by(NetworkReceiveMonitor.time.desc()).first()
     if nw_recv_entry is None:
         return
     y_array.pop(0)
-    y_array.append(nw_recv_entry.value)
+    y_array.append(nw_recv_entry.value / (1024 ** 2))
+    ax1.set_ylim(0, 500)
     line.set_data(x_array, y_array)
 
-def plot_entry(root, row=1, column=1, title='', ani_cb=None, extra_args=None):
+def plot_entry(root, row=1, column=1, title='', ani_cb=None, extra_args=None, percent=True):
     xar = list(range(60))
     yar = [0 for i in range(60)]
 
@@ -97,7 +103,7 @@ def plot_entry(root, row=1, column=1, title='', ani_cb=None, extra_args=None):
     plotcanvas.get_tk_widget().grid(column=column, row=row)
     ani = animation.FuncAnimation(fig,
                                   ani_cb,
-                                  fargs=[line, xar, yar] + (extra_args if extra_args else []),
+                                  fargs=[line, xar, yar, ax1] + (extra_args if extra_args else []),
                                   interval=2000, blit=False)
     return ani
 
@@ -113,8 +119,18 @@ for partition in Partition.select():
                                            extra_args=[partition]))
     first_part += 1
 
-nw_sent = plot_entry(root, row=3, column=1, ani_cb=animate_network_sent, title='Network Sent Bytes Usage')
-nw_recv = plot_entry(root, row=3, column=2, ani_cb=animate_network_recv, title='Network Received Bytes Usage')
+nw_sent = plot_entry(root,
+                     row=3,
+                     column=1,
+                     percent=False,
+                     ani_cb=animate_network_sent,
+                     title='Network Sent Bytes Usage')
+nw_recv = plot_entry(root,
+                     row=3,
+                     column=2,
+                     percent=False,
+                     ani_cb=animate_network_recv,
+                     title='Network Received Bytes Usage')
 
 start_date = tkcalendar.DateEntry(root, width=30, year=2021)
 start_date.grid(row=1, column=3)
@@ -123,7 +139,7 @@ end_date = tkcalendar.DateEntry(root, width=30, year=2021)
 end_date.grid(row=1, column=4)
 option_val = StringVar(root)
 option_val.set("cpu")
-report = OptionMenu(root, option_val, "cpu", "ram", "disk")
+report = OptionMenu(root, option_val, "cpu", "ram", "disk", "net_sent", "net_recv")
 report.grid(row=1, column=5)
 
 generate_button = Button(root, text="Generate Plot", command=generate_plot)
