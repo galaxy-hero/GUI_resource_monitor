@@ -1,4 +1,4 @@
-from models import CPUMonitor, MemoryMonitor, Partition, DiskMonitor
+from models import CPUMonitor, MemoryMonitor, Partition, DiskMonitor, NetworkSentMonitor, NetworkReceiveMonitor
 import tkcalendar
 from tkinter import *
 from matplotlib import pyplot as plt
@@ -66,6 +66,22 @@ def animate_partition(i, line, x_array, y_array, partition):
     y_array.append(disk_entry.value)
     line.set_data(x_array, y_array)
 
+def animate_network_sent(i, line, x_array, y_array):
+    nw_sent_entry = NetworkSentMonitor.select().order_by(NetworkSentMonitor.time.desc()).first()
+    if nw_sent_entry is None:
+        return
+    y_array.pop(0)
+    y_array.append(nw_sent_entry.value)
+    line.set_data(x_array, y_array)
+
+def animate_network_recv(i, line, x_array, y_array):
+    nw_recv_entry = NetworkReceiveMonitor.select().order_by(NetworkReceiveMonitor.time.desc()).first()
+    if nw_recv_entry is None:
+        return
+    y_array.pop(0)
+    y_array.append(nw_recv_entry.value)
+    line.set_data(x_array, y_array)
+
 def plot_entry(root, row=1, column=1, title='', ani_cb=None, extra_args=None):
     xar = list(range(60))
     yar = [0 for i in range(60)]
@@ -90,8 +106,15 @@ ram = plot_entry(root, row=1, column=2, ani_cb=animate_ram, title='RAM Usage')
 first_part = 1
 partition_animations = []
 for partition in Partition.select():
-    partition_animations.append(plot_entry(root, ani_cb=animate_partition, row=2, column=first_part, title="Partition {} usage".format(partition.path), extra_args=[partition]))
+    partition_animations.append(plot_entry(root,
+                                           ani_cb=animate_partition,
+                                           row=2, column=first_part,
+                                           title="Partition {} usage".format(partition.path),
+                                           extra_args=[partition]))
     first_part += 1
+
+nw_sent = plot_entry(root, row=3, column=1, ani_cb=animate_network_sent, title='Network Sent Bytes Usage')
+nw_recv = plot_entry(root, row=3, column=2, ani_cb=animate_network_recv, title='Network Received Bytes Usage')
 
 start_date = tkcalendar.DateEntry(root, width=30, year=2021)
 start_date.grid(row=1, column=3)

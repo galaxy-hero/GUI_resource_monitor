@@ -19,6 +19,9 @@ def get_system_partitions():
             result.append(partition.mountpoint)
     return result
 
+def get_network_bytes():
+    return psutil.net_io_counters()
+
 if __name__ == '__main__':
     #print("CPU usage is: ")
-    print(get_system_partitions())
+    print(get_network_bytes())

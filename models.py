@@ -32,7 +32,21 @@ class DiskMonitor(Model):
     class Meta:
         database = db
 
+class NetworkReceiveMonitor(Model):
+    value = IntegerField()
+    time = DateTimeField(default=datetime.now)
+
+    class Meta:
+        database = db
+
+class NetworkSentMonitor(Model):
+    value = IntegerField()
+    time = DateTimeField(default=datetime.now)
+
+    class Meta:
+        database = db
+
 if __name__ == '__main__':
     db.connect()
-    db.drop_tables([CPUMonitor, MemoryMonitor, DiskMonitor, Partition])
-    db.create_tables([CPUMonitor, MemoryMonitor, DiskMonitor, Partition])
+    db.drop_tables([CPUMonitor, MemoryMonitor, DiskMonitor, Partition, NetworkReceiveMonitor, NetworkSentMonitor])
+    db.create_tables([CPUMonitor, MemoryMonitor, DiskMonitor, Partition, NetworkReceiveMonitor, NetworkSentMonitor])

@@ -9,6 +9,11 @@ for partition in resources.get_system_partitions():
 while True:
     models.CPUMonitor.insert(value=resources.get_CPU_usage()).execute()
     models.MemoryMonitor.insert(value=resources.get_memory_usage()).execute()
+
     for partition in partitions:
         models.DiskMonitor.insert(value=resources.get_disk_usage(partition.path), partition=partition).execute()
-    sleep(2)
+
+    network_data = resources.get_network_bytes()
+    models.NetworkSentMonitor.insert(value=network_data.bytes_sent).execute()
+    models.NetworkReceiveMonitor.insert(value=network_data.bytes_recv).execute()
+    sleep(1)
