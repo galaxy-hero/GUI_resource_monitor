@@ -18,8 +18,15 @@ class MemoryMonitor(Model):
     class Meta:
         database = db
 
+class Partition(Model):
+    path = TextField(unique=True)
+
+    class Meta:
+        database = db
+
 class DiskMonitor(Model):
     value = FloatField()
+    partition = ForeignKeyField(Partition)
     time = DateTimeField(default=datetime.now)
 
     class Meta:
