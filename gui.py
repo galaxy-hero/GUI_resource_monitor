@@ -14,6 +14,33 @@ root.state('zoomed')
 root.config(background='#fafafa')
 
 
+def generate_plot():
+    """
+    Generates a plot based on the `start_date`, `end_date` and `option_val` values
+    :return: None
+    """
+    start = start_date.get_date()
+    end = end_date.get_date()
+    if end < start:
+        return
+    query_model = None
+    if option_val.get() == "cpu":
+        query_model = CPUMonitor
+    elif option_val.get() == "ram":
+        query_model = MemoryMonitor
+    elif option_val.get() == "disk":
+        query_model = DiskMonitor
+    if not query_model:
+        return
+    query = list(query_model.select().where(query_model.time.between(start, end)))
+    x_array = [i for i in range(1, len(query) + 1)]
+    y_array = [i.value for i in query]
+    fig, ax = plt.subplots()
+    ax.plot(x_array, y_array)
+    ax.set(ylabel=option_val.get(), xlabel='time', title='{} usage'.format(option_val.get()))
+    ax.grid()
+    plt.show()
+
 
 def animate_cpu(i, line, x_array, y_array):
     cpu_entry = CPUMonitor.select().order_by(CPUMonitor.time.desc()).first()
@@ -76,7 +103,7 @@ option_val.set("cpu")
 report = OptionMenu(root, option_val, "cpu", "ram", "disk")
 report.grid(row=1, column=5)
 
-generate_button = Button(root, text="Generate Plot", command=None)
+generate_button = Button(root, text="Generate Plot", command=generate_plot)
 generate_button.grid(row=1, column=6)
 
 root.mainloop()
