@@ -1,3 +1,6 @@
+"""
+Script used to gather system resources and insert them in a local PostgreSQL database every 1 seconds
+"""
 import resources, models
 from time import sleep
 
